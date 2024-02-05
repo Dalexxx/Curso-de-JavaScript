@@ -1,36 +1,76 @@
-const relogio = document.querySelector('.relogio');
-let segundos = 0; //2
-let timer; //4
+const inputTarefa = document.querySelector('.input-tarefa'); 
+const btnTarefa = document.querySelector('.btn-tarefa'); 
+const tarefas = document.querySelector('.tarefas');
 
-const criaHoraSegundos = (segundos) => { //1
-    let data = new Date(segundos * 1000); //o js recebe em MiliSegundos
-    return data.toLocaleTimeString('pt-BR', {timeZone: 'UTC'});
+function criaLi() {
+    const createLi = document.createElement('li');
+    return createLi
 }
 
-const iniciaRelogio = () => { //3
-    relogio.classList.remove('pausado');
-    timer = setInterval(() => {
-        segundos++;
-        relogio.innerHTML = criaHoraSegundos(segundos);
-    }, 1000);
+function limpaInput() {
+    inputTarefa.value = '';
+    inputTarefa.focus();
 }
 
-document.addEventListener('click', function(e) {
-    const el = e.target;
-    if (el.classList.contains('iniciar')) {
-        clearInterval(timer);
-        iniciaRelogio();
+inputTarefa.addEventListener('keypress', function (e) {
+    if (e.keyCode === 13) {
+        if (!inputTarefa.value) return;
+        criaTarefa(inputTarefa.value);       
     }
-    if (el.classList.contains('pausar')) {
-        relogio.classList.add('pausado');
-        clearInterval(timer);
-    }
-    if (el.classList.contains('zerar')) {
-        relogio.classList.remove('pausado');
-        clearInterval(timer);
-        relogio.innerHTML = '00:00:00';
-        segundos = 0;
-    }   
 })
 
+function criaBotaoApagar(li) {
+    li.innerText += ' '
+    const botaoApagar = document.createElement('button');
+    botaoApagar.innerText = 'Apagar';
+    botaoApagar.setAttribute('class', 'apagar');
+    li.appendChild(botaoApagar)
+}
 
+function criaTarefa(inputText) {
+    const li = criaLi();
+    li.innerText = inputText;
+    tarefas.appendChild(li);
+    limpaInput();
+    criaBotaoApagar(li);
+    salvarTarefas();
+}
+
+btnTarefa.addEventListener('click', function() {
+    if (!inputTarefa.value) return;
+    criaTarefa(inputTarefa.value); 
+})
+
+document.addEventListener('click', function(e) {
+    const el = e.target
+    console.log(el)
+    if (el.classList.contains('apagar')) {
+        el.parentElement.remove();
+        salvarTarefas();
+    }
+})
+
+function salvarTarefas() {
+    const liTarefas = tarefas.querySelectorAll('li');
+    const listaDeTarefas = [];
+    
+    for (let tarefa of liTarefas) {
+        let tarefaTexto = tarefa.innerText;
+        tarefaTexto = tarefaTexto.replace('Apagar').trim();
+        listaDeTarefas.push(tarefaTexto);
+
+        const tarefasJSON = JSON.stringify(listaDeTarefas);
+        localStorage.setItem('tarefas', tarefasJSON)
+    }
+}
+
+function adicionaTarefasSalva() {
+    const tarefas = localStorage.setItem('tarefas');
+    const listaDeTarefas = JSON.parse(tarefas);
+
+    for (let tarefa of listaDeTarefas) {
+        criaTarefa(tarefa);
+    }
+}
+
+adicionaTarefasSalva();
