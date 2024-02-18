@@ -1,76 +1,70 @@
-const inputTarefa = document.querySelector('.input-tarefa'); 
-const btnTarefa = document.querySelector('.btn-tarefa'); 
-const tarefas = document.querySelector('.tarefas');
+// 070.987.720-03 070.987.720-03
+/*
+7x  0x 5x 4x 8x 4x 4x 5x 0x
+10  9  8  7  6  5  4  3  2
+70  0  40 28 48 20 16 15 0 = 237
 
-function criaLi() {
-    const createLi = document.createElement('li');
-    return createLi
-}
+11 - (237 % 11) = 5 (Primeiro dígito)
+Se o número digito for maior que 9, consideramos 0.
 
-function limpaInput() {
-    inputTarefa.value = '';
-    inputTarefa.focus();
-}
+7x  0x 5x 4x 8x 4x 4x 5x 0x 5x
+11 10  9  8  7  6  5  4  3  2
+77  0  45 32 56 24 20 20 0  10 = 284
 
-inputTarefa.addEventListener('keypress', function (e) {
-    if (e.keyCode === 13) {
-        if (!inputTarefa.value) return;
-        criaTarefa(inputTarefa.value);       
+11 - (284 % 11) = 2 (Primeiro dígito)
+Se o número digito for maior que 9, consideramos 0.
+*/
+
+class ValidaCPF {
+    constructor(cpfEnviado) {
+        Object.defineProperty(this, 'cpfLimpo', {
+            writable: false,
+            enumerable: true,
+            configurable: false,
+            value: cpfEnviado.replace(/\D+/g, '')
+        });
     }
-})
 
-function criaBotaoApagar(li) {
-    li.innerText += ' '
-    const botaoApagar = document.createElement('button');
-    botaoApagar.innerText = 'Apagar';
-    botaoApagar.setAttribute('class', 'apagar');
-    li.appendChild(botaoApagar)
-}
-
-function criaTarefa(inputText) {
-    const li = criaLi();
-    li.innerText = inputText;
-    tarefas.appendChild(li);
-    limpaInput();
-    criaBotaoApagar(li);
-    salvarTarefas();
-}
-
-btnTarefa.addEventListener('click', function() {
-    if (!inputTarefa.value) return;
-    criaTarefa(inputTarefa.value); 
-})
-
-document.addEventListener('click', function(e) {
-    const el = e.target
-    console.log(el)
-    if (el.classList.contains('apagar')) {
-        el.parentElement.remove();
-        salvarTarefas();
+    sequencia() {
+        return this.cpfLimpo[0].repeat(11) === this.cpfLimpo;
     }
-})
 
-function salvarTarefas() {
-    const liTarefas = tarefas.querySelectorAll('li');
-    const listaDeTarefas = [];
-    
-    for (let tarefa of liTarefas) {
-        let tarefaTexto = tarefa.innerText;
-        tarefaTexto = tarefaTexto.replace('Apagar').trim();
-        listaDeTarefas.push(tarefaTexto);
+    geraDigito(cpfSemDigitos) {
+        let total = 0;
+        let regressivo = cpfSemDigitos.length + 1;
 
-        const tarefasJSON = JSON.stringify(listaDeTarefas);
-        localStorage.setItem('tarefas', tarefasJSON)
+        for (let stringNumerica of cpfSemDigitos) {
+            total += regressivo * Number(stringNumerica);
+            regressivo--;
+        }
+
+        const digito = 11 - (total % 11);
+        return digito <= 9 ? String(digito) : '0' //se menor que 10, retorna o digito em formato de string
     }
+
+    geraNovoCPF() {
+        const cpfSemDigitos = this.cpfLimpo.slice(0, -2); //pega o cpf sem os ultimos dois digitos
+        const digito1 = this.geraDigito(cpfSemDigitos);
+        const digito2 = this.geraDigito(cpfSemDigitos + digito1);
+        this.novoCPF = cpfSemDigitos + digito1 + digito2;
+    }
+
+    valida() {
+        if(!this.cpfLimpo) return false;
+        if(typeof this.cpfLimpo !== 'string') return false;
+        if(this.cpfLimpo.length !== 11) return false;
+        if(this.sequencia()) return false;
+        this.geraNovoCPF();
+
+        return this.novoCPF === this.cpfLimpo;
+    }
+
 }
 
-function adicionaTarefasSalva() {
-    const tarefas = localStorage.setItem('tarefas');
-    const listaDeTarefas = JSON.parse(tarefas);
+let validacpf = new ValidaCPF('070.987.720-03');
 
-    for (let tarefa of listaDeTarefas) {
-        criaTarefa(tarefa);
-    }
+if (validacpf.valida()) {
+    console.log('CPF VÁLIDO')
+} else {
+    console.log('CPF INVÁLIDO')
 }
-
-adicionaTarefasSalva();
